@@ -1,350 +1,329 @@
 # PolicyExplainer
 
-PolicyExplainer is an AI-powered document intelligence system that helps users understand complex health insurance policy PDFs through structured summaries, grounded Q&A, and automated evaluation metrics.
+PolicyExplainer is a modular Retrieval-Augmented Generation (RAG) system that transforms complex health insurance policy PDFs into structured, grounded, and evaluable outputs.
 
-This system is a document explanation tool — not medical or legal advice.  
-It answers strictly using the uploaded document and explicitly states when information is not found.  
-It never uses external knowledge.
+The system is engineered for:
 
----
+- Deterministic preprocessing
+- Strict citation enforcement
+- Retrieval precision
+- Multi-metric evaluation
+- Reproducibility and traceability
 
-## Overview
-
-Insurance policies are long, dense, and difficult to interpret. PolicyExplainer transforms unstructured policy PDFs into structured, explainable outputs using a modular Retrieval-Augmented Generation (RAG) architecture.
-
-The system performs:
-
-- PDF ingestion and cleaning  
-- Token-based chunking with overlap  
-- Embedding generation and vector indexing  
-- Multi-query section retrieval  
-- Citation-enforced summarization  
-- Grounded Q&A with routing logic  
-- Automated evaluation metrics (faithfulness, completeness)  
-- Confidence scoring  
+PolicyExplainer is not a general chatbot. It is a controlled document intelligence pipeline built to reduce hallucination risk and improve interpretability in applied LLM systems.
 
 ---
 
-## Core Features
+# Problem Statement
 
-### 1. PDF Ingestion Pipeline
+Insurance policies are legally dense and difficult for consumers to interpret. Traditional LLM-based systems often:
 
-- Upload insurance policy PDF  
-- Extract text per page using PyMuPDF  
-- Remove repeated headers and footers  
-- Validate likely policy structure using keyword heuristics  
-- Chunk text into 500–800 token windows with overlap  
-- Persist:
-  - raw.pdf  
-  - pages.json  
-  - chunks.jsonl  
-- Generate embeddings and index in Chroma vector database  
+- Hallucinate unsupported details
+- Provide incomplete summaries
+- Overuse jargon
+- Fail to quantify output reliability
 
-Chunk IDs follow the format:
+PolicyExplainer addresses these issues by:
+
+- Restricting answers strictly to document content
+- Enforcing citation validation
+- Dropping unsupported claims
+- Separating deterministic processing from probabilistic generation
+- Measuring output quality across three evaluation dimensions:
+  - Faithfulness
+  - Completeness
+  - Simplicity
+
+---
+
+# System Capabilities
+
+## 1. Deterministic PDF Ingestion
+
+- Page-level text extraction (PyMuPDF)
+- Header/footer cleaning
+- Heuristic validation of likely policy structure
+- Token-based chunking (500–800 tokens)
+- Sliding overlap (~80 tokens)
+- Deterministic chunk IDs:
 
 ```text
 c_{page_number}_{chunk_index}
 ```
 
----
-
-### 2. Structured Policy Summaries
-
-Generates plain-English bullet summaries across six canonical sections:
-
-- Plan Snapshot  
-- Cost Summary  
-- Summary of Covered Services  
-- Administrative Conditions  
-- Exclusions & Limitations  
-- Claims, Appeals & Member Rights  
-
-Each section:
-
-- Returns a `present` flag  
-- Includes structured bullet objects  
-- Enforces citation validation  
-- Drops bullets without valid citations  
-- Computes a confidence score (High / Medium / Low)  
-
-All citations are filtered to ensure they reference retrieved chunk_ids only.
+All artifacts are persisted for reproducibility.
 
 ---
 
-### 3. Grounded Q&A (RAG)
+## 2. Section-Aware Retrieval
 
-Users can ask natural language questions such as:
+Rather than a single embedding query, each canonical policy section triggers multiple semantic sub-queries.
 
-- What is my deductible?  
-- Is urgent care covered?  
-- Do I need prior authorization?  
+Example (Cost Summary):
 
-The Q&A pipeline:
+- deductible
+- copay
+- coinsurance
+- out-of-pocket maximum
+- premium
 
-1. Retrieve top-k chunks using vector search  
-2. Sort chunks in document order  
-3. Force structured JSON response  
-4. Validate citations against allowed chunk_ids  
-5. Remove unsupported claims  
-6. Compute confidence score  
+Retrieval pipeline:
 
-If information is not present in the document, the system returns exactly:
+1. Run vector search per sub-query
+2. Deduplicate by chunk_id
+3. Retain lowest-distance match
+4. Sort by (page_number, chunk_id)
+5. Cap context window to avoid overload
+
+This improves recall and mitigates the "Lost-in-the-Middle" problem.
+
+---
+
+## 3. Structured Summarization
+
+Each section summary enforces a strict JSON contract:
+
+- present (boolean)
+- bullets[]
+  - text
+  - citations[] (chunk_id + page)
+
+Post-generation enforcement:
+
+- Filter citations to allowed chunk_ids
+- Drop bullets without valid citations
+- Record validation issues
+- Compute confidence score
+
+Unsupported statements never appear in final output.
+
+---
+
+## 4. Grounded Q&A
+
+Users can ask natural language questions about the uploaded policy.
+
+Q&A pipeline:
+
+1. Retrieve top-k relevant chunks
+2. Sort in document order
+3. Force structured JSON response
+4. Filter invalid citations
+5. Remove unsupported claims
+6. Compute confidence score
+
+If no supporting chunks exist, the system returns exactly:
 
 ```text
 Not found in this document.
 ```
 
-No external knowledge is ever used.
+No external knowledge is used.
 
 ---
 
-### 4. Question Routing Logic
+# Evaluation Framework
 
-The system routes user input into one of four paths:
-
-- Greeting response (no citations)  
-- Scenario question (e.g., emergency visit)  
-- Section deep-dive explanation  
-- Standard RAG question  
-
-This ensures appropriate response style and grounding behavior.
-
----
-
-### 5. Evaluation Metrics
-
-The system supports automated evaluation via:
+PolicyExplainer includes deterministic post-generation evaluation via:
 
 ```text
 POST /evaluate/{doc_id}
 ```
 
-Metrics include:
-
-- Faithfulness (citation support validation)  
-- Completeness (section coverage weighting)  
-- Structural validation checks  
-
-Faithfulness ensures summary bullets are supported by cited chunks.  
-Completeness ensures major policy sections are addressed.  
-Confidence scores reflect citation density and validation issues.
+The system measures output quality across three independent axes.
 
 ---
 
-## Architecture
+## 1. Faithfulness (0.0 – 1.0)
 
-High-Level Flow:
+Measures whether each summary bullet is supported by its cited chunk.
 
-1. Upload PDF  
-2. Extract and clean page text  
-3. Chunk text with overlap  
-4. Store chunks locally  
-5. Generate embeddings  
-6. Index in Chroma  
-7. Retrieve per section  
-8. Generate LLM summary or Q&A  
-9. Validate citations  
-10. Return structured output  
-11. Optionally evaluate  
+Support logic:
 
-Backend modules:
+- Token overlap threshold
+- Numeric consistency checks
+- Citation validation against retrieved chunk_ids
 
-- ingestion.py  
-- retrieval.py  
-- summarization.py  
-- qa.py  
-- evaluation.py  
-- storage.py  
-- schemas.py  
-- utils.py  
-
-The frontend is built in Streamlit and communicates with the FastAPI backend.
+High faithfulness means claims are grounded in the document.
 
 ---
 
-## Tech Stack
+## 2. Completeness (0.0 – 1.0)
+
+Measures coverage across canonical policy sections.
+
+Weighted scoring:
+
+- Cost Summary (35%)
+- Covered Services (30%)
+- Administrative Conditions (15%)
+- Exclusions & Limitations (10%)
+- Plan Snapshot (5%)
+- Claims & Appeals (5%)
+
+Encourages balanced and comprehensive summaries.
+
+---
+
+## 3. Simplicity (0.0 – 1.0)
+
+Measures how much more understandable the generated summary is compared to the original policy text.
+
+The Simplicity Score evaluates:
+
+1. Readability Improvement
+   - Reduction in average sentence length
+   - Flesch Reading Ease delta between source and summary
+
+2. Jargon Reduction
+   - Decrease in domain-specific terms using a predefined jargon dictionary
+   - Percentage of simplified terminology substitutions
+
+3. Structural Clarity
+   - Bullet formatting vs dense paragraph text
+   - Reduced clause complexity
+
+Example logic:
+
+```text
+Simplicity Score =
+0.4 * readability_improvement
++ 0.4 * jargon_reduction
++ 0.2 * structural_simplification
+```
+
+Interpretation:
+
+- ≥ 0.75 → Strong simplification
+- 0.50–0.75 → Moderate simplification
+- < 0.50 → Limited simplification
+
+This metric ensures summaries are not only grounded and complete, but genuinely easier to understand.
+
+---
+
+# Architecture Overview
+
+The system is divided into:
+
+- Frontend (Streamlit) — UI layer
+- Backend (FastAPI) — document processing & LLM orchestration
+
+Core backend modules:
+
+```text
+backend/
+├─ api.py
+├─ ingestion.py
+├─ retrieval.py
+├─ summarization.py
+├─ qa.py
+├─ evaluation.py
+├─ storage.py
+├─ schemas.py
+└─ utils.py
+```
+
+Artifacts are stored per document:
+
+```text
+data/documents/{doc_id}/
+├─ raw.pdf
+├─ pages.json
+├─ chunks.jsonl
+└─ policy_summary.json
+```
+
+Vector embeddings are stored in:
+
+```text
+./chroma_data
+```
+
+---
+
+# Deterministic vs Probabilistic Layers
+
+Deterministic:
+
+- Chunking
+- Retrieval ordering
+- Deduplication
+- Citation filtering
+- Faithfulness scoring
+- Completeness scoring
+- Simplicity scoring
+- Confidence scoring
+
+Probabilistic:
+
+- LLM generation
+
+By isolating deterministic validation layers, the system reduces hallucination exposure and increases auditability.
+
+---
+
+# Hallucination Mitigation Strategy
+
+PolicyExplainer reduces hallucination risk through:
+
+- Context-limited retrieval
+- Multi-query recall
+- Strict JSON contract enforcement
+- Citation filtering
+- Automatic removal of unsupported bullets
+- Explicit "Not found" requirement
+- Deterministic faithfulness scoring
+
+Reliability is prioritized over verbosity.
+
+---
+
+# Technology Stack
 
 Backend:
-- Python  
-- FastAPI  
-- Pydantic  
-- PyMuPDF  
-- Chroma vector DB  
-- OpenAI API  
+- Python
+- FastAPI
+- Pydantic
+- PyMuPDF
+- Chroma Vector Database
+- OpenAI API
 
 Frontend:
-- Streamlit  
-- Modular component structure  
+- Streamlit
 
 Persistence:
-- JSON storage per document  
-- Chroma persistent vector index  
+- Local JSON artifact storage
+- Persistent vector index
 
 ---
 
-## Project Structure
+# Key Engineering Decisions
 
-```text
-PolicyExplainer/
-├─ backend/
-│  ├─ api.py
-│  ├─ config.py
-│  ├─ ingestion.py
-│  ├─ retrieval.py
-│  ├─ summarization.py
-│  ├─ qa.py
-│  ├─ evaluation.py
-│  ├─ schemas.py
-│  ├─ storage.py
-│  └─ utils.py
-├─ frontend/
-│  ├─ app.py
-│  ├─ assets/
-│  │  └─ header_image.jpg
-│  ├─ components/
-│  │  ├─ chat.py
-│  │  ├─ dashboard.py
-│  │  ├─ hero.py
-│  │  └─ sidebar.py
-│  └─ utils/
-│     ├─ pdf_generator.py
-│     ├─ state.py
-│     └─ style.py
-├─ schema/
-│  ├─ jargon_terms.json
-│  ├─ summary_schema.json
-│  └─ terminology_map.json
-├─ tests/
-├─ .env.example
-├─ .gitignore
-├─ pyproject.toml
-├─ requirements.txt
-└─ README.md
-```
+- Section-aware multi-query retrieval
+- Deterministic chunking for reproducibility
+- Post-generation citation validation
+- Automatic removal of unsupported claims
+- Weighted completeness scoring
+- Readability-based simplicity scoring
+- Separation of evaluation from generation
+
+These decisions prioritize interpretability, reliability, and measurable output quality.
 
 ---
 
-## Setup
+# Why This Project Matters
 
-### 1. Create Virtual Environment
+PolicyExplainer demonstrates applied RAG system design with:
 
-```bash
-python -m venv .venv
-```
+- Retrieval optimization
+- Guardrail engineering
+- Structured output enforcement
+- Multi-axis evaluation metrics
+- Reproducibility and traceability
 
-Activate:
-
-Windows:
-
-```bash
-.venv\Scripts\activate
-```
-
-Mac/Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
+It reflects deliberate engineering around LLM reliability rather than simple API integration.
 
 ---
 
-### 2. Configure Environment
-
-Copy example:
-
-```bash
-copy .env.example .env
-```
-
-Required:
-
-```text
-OPENAI_API_KEY=your_api_key_here
-```
-
-Optional:
-
-```text
-LLM_MODEL=gpt-4o-mini
-EMBEDDING_MODEL=text-embedding-3-small
-VECTOR_DB_PATH=./chroma_data
-```
-
----
-
-### 3. Run Backend
-
-```bash
-uvicorn backend.main:app --reload
-```
-
-Backend:
-http://127.0.0.1:8000
-
-Docs:
-http://127.0.0.1:8000/docs
-
----
-
-### 4. Run Frontend
-
-```bash
-streamlit run frontend/app.py
-```
-
-Frontend:
-http://localhost:8501
-
----
-
-## API Endpoints
-
-```text
-POST   /ingest
-POST   /summary/{doc_id}
-POST   /summary/{doc_id}/section/{section_id}
-POST   /qa/{doc_id}
-POST   /evaluate/{doc_id}
-GET    /chunks/{doc_id}
-```
-
----
-
-## Design Principles
-
-- Grounded outputs only  
-- Strict citation enforcement  
-- Deterministic chunking  
-- Modular architecture  
-- Environment-based configuration  
-- No hardcoded secrets  
-- Reproducibility via stored raw PDF + chunks  
-
----
-
-## Limitations
-
-- Scanned PDFs require OCR  
-- Complex table layouts may extract imperfectly  
-- Policy validation is heuristic-based  
-- CORS currently open for local development  
-- LLM outputs may vary slightly due to temperature  
-
----
-
-## Future Improvements
-
-- Add document deletion endpoint  
-- Add stricter CORS controls  
-- Add debug logging flag  
-- Improve table extraction  
-- Add OCR fallback support  
-- Add production deployment config  
-
----
+End of README.
