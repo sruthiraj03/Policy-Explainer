@@ -29,40 +29,35 @@ import streamlit as st
 def render_sidebar():
     """
     Render the application sidebar with controls and performance metrics.
-
-    Sections:
-    1) App Controls
-       - "Reset Application" clears all session state and reruns the app.
-    2) AI Performance Metrics (conditional)
-       - Displays Faithfulness and Completeness scores if available.
-
-    Returns:
-        None
     """
-    # All sidebar content must be rendered within the st.sidebar context.
     with st.sidebar:
-        # --- App Controls Section ---
         st.header("App Controls")
 
-        # Full reset button:
-        # Clears all session state keys (doc_id, summary, chat history, etc.)
-        # and forces a rerun to return to the hero view.
         if st.button("Reset Application", use_container_width=True):
             st.session_state.clear()
             st.rerun()
 
-        # --- Evaluation Metrics Section ---
-        # Only display metrics if they exist and are non-empty.
         if "eval_data" in st.session_state and st.session_state["eval_data"]:
             st.divider()
             st.header("AI Performance Metrics")
             st.caption("Automatically calculated by the Evaluation Engine.")
 
-            # Faithfulness and completeness are returned as floats between 0 and 1.
-            # Convert to percentage format for display.
-            f_score = st.session_state["eval_data"].get("faithfulness", 0) * 100
-            c_score = st.session_state["eval_data"].get("completeness", 0) * 100
+            eval_data = st.session_state["eval_data"]
 
-            # Streamlit metric components provide a clean numeric display.
+            # Percentage-style metrics
+            f_score = eval_data.get("faithfulness", 0) * 100
+            c_score = eval_data.get("completeness", 0) * 100
+
+            # Simplicity should show Summary Flesch directly
+            s_score = eval_data.get("simplicity")
+            improvement = eval_data.get("improvement")
+
             st.metric("Faithfulness (Accuracy)", f"{f_score:.1f}%")
             st.metric("Completeness (Coverage)", f"{c_score:.1f}%")
+
+            if s_score is not None:
+                st.metric("Simplicity (Readability)", f"{s_score:.2f}")
+
+            if improvement is not None:
+                with st.expander("Readability Details"):
+                    st.metric("Improvement Score", f"{improvement:.2f}")

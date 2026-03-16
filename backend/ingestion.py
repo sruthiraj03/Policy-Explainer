@@ -106,7 +106,7 @@ def is_likely_policy(text: str) -> bool:
 
     # Debug logging: helps tune thresholds during development.
     # (Consider routing through a logger later; intentionally left as print to preserve behavior.)
-    print(f"📊 DEBUG: Keywords: {len(matches)}")
+    print(f" DEBUG: Keywords: {len(matches)}")
     return is_valid
 
 

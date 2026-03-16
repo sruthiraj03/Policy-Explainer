@@ -45,7 +45,7 @@ load_dotenv()
 
 # Backend base URL for FastAPI.
 # NOTE: Default value is a Markdown-formatted link string; preserved as provided.
-API_BASE = os.getenv("API_BASE", "[http://127.0.0.1:8000](http://127.0.0.1:8000)")
+API_BASE = os.getenv("API_BASE", "[http://127.0.0.1:8000]")
 
 
 def render_hero_view():
@@ -144,13 +144,13 @@ def render_hero_view():
 
                         # --- Step 2: Summarize ---
                         status_help.markdown("📑 **Step 2/3:** Generating summary...")
-                        summary_r = requests.post(f"{API_BASE}/summary/{doc_id}", timeout=120)
+                        summary_r = requests.post(f"{API_BASE}/summary/{doc_id}", timeout=300)
                         summary_r.raise_for_status()
 
                         # --- Step 3: Evaluate ---
                         status_help.markdown("⚖️ **Step 3/3:** Verifying accuracy...")
-                        eval_r = requests.post(f"{API_BASE}/evaluate/{doc_id}", timeout=120)
-
+                        eval_r = requests.post(f"{API_BASE}/evaluate/{doc_id}", timeout=300)
+                        eval_r.raise_for_status()
                         # --- Update Session State ---
                         # Store results needed by the dashboard view.
                         st.session_state["doc_id"] = doc_id

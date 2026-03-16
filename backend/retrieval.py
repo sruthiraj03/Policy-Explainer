@@ -85,8 +85,8 @@ SECTION_QUERIES: Final[dict[str, tuple[str, ...]]] = {
 # Retrieval tuning knobs:
 # - TOP_K_PER_QUERY: How many hits to request for each sub-query.
 # - MAX_CHUNKS_SECTION: Global cap to avoid passing too much context to the LLM.
-TOP_K_PER_QUERY = 4
-MAX_CHUNKS_SECTION = 18
+TOP_K_PER_QUERY = 3
+MAX_CHUNKS_SECTION = 10
 
 
 def retrieve_for_section(

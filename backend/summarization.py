@@ -54,6 +54,34 @@ DetailLevel = Literal["standard", "detailed"]
 STANDARD_MAX_BULLETS = 6
 DETAILED_MAX_BULLETS = 12
 
+SIMPLE_REPLACEMENTS = {
+    r"\bprior to\b": "before",
+    r"\bin the event of\b": "if",
+    r"\bobtain\b": "get",
+    r"\badditional\b": "extra",
+    r"\bassistance\b": "help",
+    r"\bcommence\b": "start",
+    r"\bterminate\b": "end",
+    r"\bpursuant to\b": "under",
+    r"\bin accordance with\b": "under",
+    r"\butilize\b": "use",
+    r"\bregarding\b": "about",
+}
+
+
+def simplify_summary_text(text: str) -> str:
+    if not text:
+        return text
+
+    updated = text
+
+    for pattern, replacement in SIMPLE_REPLACEMENTS.items():
+        updated = re.sub(pattern, replacement, updated, flags=re.IGNORECASE)
+
+    updated = re.sub(r"\s+", " ", updated).strip()
+    updated = re.sub(r"\s+([.,;:])", r"\1", updated)
+
+    return updated
 
 def _build_context(chunks: list[dict[str, Any]]) -> str:
     """
@@ -180,11 +208,30 @@ def summarize_section(
     # System prompt: enforce strict JSON shape and strict grounding.
     # Note: This is intentionally minimal and structural; deeper stylistic guidance can be
     # added without changing logic, but behavior is preserved as-is here.
-    system_prompt = f"""You are a policy document summarizer. Use ONLY provided chunks.
-    You MUST output your response as a valid JSON object with exactly these keys:
-    - "present": boolean (true if info is found, false if not)
-    - "bullets": a list of dicts, each with "text" (the summary point) and "citations" (a list of dicts with "chunk_id" and "page").
-    """
+    system_prompt = f""" 
+    You are a policy document summarizer for consumers. 
+    Use ONLY the provided chunks. Write in plain, consumer-friendly English. 
+    Your goal is to make policy information easier to understand without changing its meaning. 
+    Rules: 
+    1. Use simple, direct language. 
+    2. Prefer short sentences. 
+    3. Use everyday words instead of legal or insurance jargon whenever possible. 
+    4. If you must use a technical term, explain it in simple words. 
+    5. Avoid copying policy language unless it is necessary for accuracy. 
+    6. Keep each bullet focused on one idea. 
+    7. Preserve important numbers, limits, conditions, and requirements exactly as stated. 
+    8. Do not invent information. 
+    9. Avoid formal phrases like "subject to", "pursuant to", "in accordance with", and "shall" unless they are required for accuracy. 
+    10. Write each bullet as if you are explaining the policy to a normal member with no insurance background. 
+    11. If the information is not present in the chunks, set "present" to false. 
+    
+    You MUST output your response as a valid JSON object with exactly these 
+    keys: 
+    - "present": boolean 
+    - "bullets": a list of dicts, each with: 
+        - "text": the summary point in plain English 
+        - "citations": a list of dicts with "chunk_id" and "page" 
+"""
 
     # Call the model and parse JSON output.
     try:
@@ -225,13 +272,16 @@ def summarize_section(
         # Normalize text output for consistent phrasing and expanded terminology.
         text = normalize_text(b.get("text", ""), term_map)
 
+        # Light readability-focused post-processing on bullet text only.
+        text = simplify_summary_text(text)
+
         cites = []
         for c in b.get("citations", []):
             # Only keep citations that refer to chunks we actually retrieved.
             if str(c.get("chunk_id")) in allowed_ids:
                 # Proactive fix: coerce page to int to avoid Pydantic type errors.
                 try:
-                    page_num = int(c.get('page', 0))
+                    page_num = int(c.get("page", 0))
                 except (ValueError, TypeError):
                     page_num = 0
 
