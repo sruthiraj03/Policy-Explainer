@@ -22,64 +22,47 @@ import streamlit as st
 
 
 def load_css():
-    """
-    Inject custom CSS into the Streamlit app.
-
-    This function should be called once at the top of the main app script
-    (after `st.set_page_config()` if used).
-
-    Notes:
-    - Uses `unsafe_allow_html=True` because raw <style> tags are required.
-    - Relies on Streamlit's internal `data-testid` attributes and layout structure.
-      These may change across Streamlit versions.
-    """
     st.markdown("""
     <style>
 
       /* --- Global Layout Adjustments --- */
 
-      /* Keep the top app header white and layered above content */
       .stAppHeader {
         background-color: white;
         z-index: 99;
       }
 
-      /* Reduce default vertical padding for tighter layout */
       .block-container {
         padding-top: 1rem;
       }
 
       /* --- HERO SECTION STYLES --- */
 
-      /* Main landing page title */
       .hero-title {
-        font-size: 60px !important;
-        font-weight: 800;
+        font-size: 38px !important; 
+        font-weight: 600;
         color: #0F172A;
         margin-bottom: 0px;
         line-height: 1.1;
       }
 
-      /* Subtitle below hero title */
       .hero-subtitle {
-        font-size: 28px !important;
+        font-size: 25px !important;  
         font-weight: 500;
         color: #334155;
         margin-bottom: 20px;
         margin-top: 10px;
       }
 
-      /* Supporting hero text paragraph */
       .hero-text {
-        font-size: 18px !important;
+        font-size: 15px !important;  
         line-height: 1.6;
         color: #475569;
-        margin-bottom: 30px;
+        margin-bottom: 20px;
       }
 
-      /* Dashboard title styling */
       .dash-title {
-        font-size: 32px !important;
+        font-size: 28px !important;
         font-weight: 800;
         color: #0F172A;
         margin: 0;
@@ -88,32 +71,52 @@ def load_css():
 
       /* --- File Uploader Customization --- */
 
-      /* Replace default drag-and-drop text */
-      [data-testid="stFileUploaderDropzone"] div div::before {
-        content: "Select your insurance document ";
-        visibility: visible;
+      [data-testid="stFileUploaderDropzone"] {
+        position: relative;
+        padding: 10px 10px 10px 10px !important;  
+        min-height: 10px;
+        border-radius: 10px;
       }
 
-      /* Hide the original helper text */
-      [data-testid="stFileUploaderDropzone"] div div span {
-        display: none;
+      [data-testid="stFileUploaderDropzone"]::before {
+        content: "Select your insurance document";
+        position: absolute;
+        top: 24px;
+        left: 24px;
+        font-size: 16px;  
+        font-weight: 600;
+        color: #0F172A;
+        line-height: 1.1;
+        pointer-events: none;
+        z-index: 2;
+      }
+
+      [data-testid="stFileUploaderDropzone"] button {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+
+        font-size: 16px !important; 
+        font-weight: 400;
+        padding: 8px 8px !important;
+        border-radius: 8px;
+      }
+
+      [data-testid="stFileUploaderDropzoneInstructions"] {
+        display: none !important;
+      }
+
+      [data-testid="stFileUploaderDropzone"] small {
+        display: none !important;
       }
 
       /* --- Sticky Chat Column --- */
 
-      /*
-        Trick:
-        - Insert a marker div in layout (.chat-sticky-marker).
-        - Hide its container.
-        - Make the following container sticky.
-      */
-
-      /* Hide the placeholder marker container */
       div[data-testid="element-container"]:has(.chat-sticky-marker) {
         display: none !important;
       }
 
-      /* Make the actual chat container sticky */
       div[data-testid="element-container"]:has(.chat-sticky-marker) + div {
         position: sticky !important;
         top: 110px !important;
@@ -122,13 +125,13 @@ def load_css():
 
       /* --- Button Styling --- */
 
-      /* Standardize primary and download button appearance */
       div.stButton > button,
       div.stDownloadButton > button {
         width: 100%;
         border-radius: 8px;
-        height: 3em;
+        height: 2.6em;   /* slightly reduced */
         font-weight: 600;
+        font-size: 14px;
       }
 
     </style>

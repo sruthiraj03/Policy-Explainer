@@ -39,6 +39,7 @@ import os
 import requests
 import streamlit as st
 from dotenv import load_dotenv
+import base64
 
 # Load environment variables for the API URL.
 load_dotenv()
@@ -67,16 +68,26 @@ def render_hero_view():
     Returns:
         None
     """
-    col_text, col_img = st.columns([1, 1], gap="large")
+    col_text, col_img = st.columns([1, 1.3], gap="large")
 
     # --- Left Column: Text + Upload Controls ---
     with col_text:
-        # Hero title and subtitle are rendered as HTML to allow custom CSS classes.
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        logo_path = os.path.join(base_dir, "assets", "header_logo.png")
+
+        if os.path.exists(logo_path):
+            with open(logo_path, "rb") as f:
+                encoded = base64.b64encode(f.read()).decode()
+
+            st.markdown(
+                f'<img src="data:image/png;base64,{encoded}" style="width: 400px; margin-bottom: 3px;" />',
+                unsafe_allow_html=True
+            )
+
         st.markdown(
-            '<h1 class="hero-title">Policy Explainer</h1><div class="hero-subtitle">Understand your health insurance.</div>',
+            '<div class="hero-subtitle">Understand your health insurance</div>',
             unsafe_allow_html=True
         )
-
         # If a previous upload attempt failed validation, show the error and provide a reset button.
         if "upload_error" in st.session_state:
             st.error(f"🚫 **Validation Failed:** {st.session_state['upload_error']}")
@@ -89,7 +100,7 @@ def render_hero_view():
         else:
             # Value proposition text displayed when not in an error state.
             st.markdown(
-                '<div class="hero-text">Decode your health insurance instantly. Upload your <b>Summary of Benefits</b> (PDF) to reveal hidden costs.</div>',
+                '<div class="hero-text">Turn complex insurance documents into simple summaries while asking questions to get clear and reliable answers about your coverage.</div>',
                 unsafe_allow_html=True
             )
 
@@ -129,6 +140,7 @@ def render_hero_view():
                             status_help.empty()
                             error_detail = ingest_r.json().get("detail", "Invalid document.")
 
+                            # Remove the generic "Validation Failed:" prefix if present for a cleaner message.
                             # Remove the generic "Validation Failed:" prefix if present for a cleaner message.
                             st.session_state["upload_error"] = error_detail.replace("Validation Failed:", "").strip()
 

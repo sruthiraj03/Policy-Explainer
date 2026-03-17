@@ -499,7 +499,7 @@ def run_ingest(pdf_content: bytes, base_path: Path | None = None) -> str:
         # --- NEW: Policy Validation Step ---
         # Combine text from the first few pages (where SBC summaries and plan details often appear)
         # and ensure the document contains sufficient insurance-related terminology.
-        sample_text = " ".join([p.text or "" for p in pages[:3]])
+        sample_text = " ".join([p.text or "" for p in pages[:5]])
         if not is_likely_policy(sample_text):
             raise ValueError(
                 "Validation Failed: This document does not appear to be a health insurance "

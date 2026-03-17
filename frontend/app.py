@@ -21,6 +21,7 @@ Execution:
 - When run directly (`streamlit run app.py`), main() is invoked.
 """
 
+import os
 import streamlit as st
 
 from components.hero import render_hero_view
@@ -38,7 +39,6 @@ st.set_page_config(
     layout="wide",
     page_icon="📄"
 )
-
 
 def main():
     """
