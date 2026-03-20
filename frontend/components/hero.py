@@ -46,7 +46,7 @@ load_dotenv()
 
 # Backend base URL for FastAPI.
 # NOTE: Default value is a Markdown-formatted link string; preserved as provided.
-API_BASE = os.getenv("API_BASE", "[http://127.0.0.1:8000]")
+API_BASE = st.secrets["API_BASE"].rstrip("/")
 
 
 def render_hero_view():

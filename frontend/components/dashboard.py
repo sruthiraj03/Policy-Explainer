@@ -40,7 +40,7 @@ from components.chat import render_chat_panel
 # Load environment variables for the API URL.
 # This allows different deployment environments to configure the backend location cleanly.
 load_dotenv()
-API_BASE = os.getenv("API_BASE", "http://127.0.0.1:8000")
+API_BASE = st.secrets["API_BASE"].rstrip("/")
 
 
 def render_summary_content():

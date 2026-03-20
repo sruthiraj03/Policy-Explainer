@@ -35,7 +35,7 @@ load_dotenv()
 # Base URL for the FastAPI backend.
 # NOTE: The default value below appears to be formatted like a Markdown link; we preserve it
 # exactly as-is to avoid changing behavior. The rest of the app will use it as provided.
-API_BASE = os.getenv("API_BASE", "[http://127.0.0.1:8000](http://127.0.0.1:8000)")
+API_BASE = st.secrets["API_BASE"].rstrip("/")
 
 
 def render_chat_panel():
