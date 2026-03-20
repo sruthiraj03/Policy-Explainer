@@ -38,16 +38,15 @@ Configuration:
 import os
 import requests
 import streamlit as st
-from dotenv import load_dotenv
 import base64
-
-# Load environment variables for the API URL.
-load_dotenv()
 
 # Backend base URL for FastAPI.
 # NOTE: Default value is a Markdown-formatted link string; preserved as provided.
 API_BASE = st.secrets["API_BASE"].rstrip("/")
+API_PREFIX = ""
 
+def api_url(path: str) -> str:
+    return f"{API_BASE}{API_PREFIX}{path}"
 
 def render_hero_view():
     """
@@ -132,7 +131,7 @@ def render_hero_view():
 
                         # requests expects multipart "files" mapping: {field: (filename, bytes, content_type)}
                         files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/pdf")}
-                        ingest_r = requests.post(f"{API_BASE}/ingest", files=files, timeout=120)
+                        ingest_r = requests.post(api_url("/ingest"), files=files, timeout=120)
 
                         # Validation failures are surfaced by the backend as HTTP 400 with a "detail" message.
                         # This branch converts backend messaging into a cleaner UI error state.
@@ -156,12 +155,12 @@ def render_hero_view():
 
                         # --- Step 2: Summarize ---
                         status_help.markdown("📑 **Step 2/3:** Generating summary...")
-                        summary_r = requests.post(f"{API_BASE}/summary/{doc_id}", timeout=300)
+                        summary_r = requests.post(api_url(f"/summary/{doc_id}"), timeout=300)
                         summary_r.raise_for_status()
 
                         # --- Step 3: Evaluate ---
                         status_help.markdown("⚖️ **Step 3/3:** Verifying accuracy...")
-                        eval_r = requests.post(f"{API_BASE}/evaluate/{doc_id}", timeout=300)
+                        eval_r = requests.post(api_url(f"/evaluate/{doc_id}"), timeout=300)
                         eval_r.raise_for_status()
                         # --- Update Session State ---
                         # Store results needed by the dashboard view.

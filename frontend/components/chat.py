@@ -26,17 +26,15 @@ Expected session_state prerequisites (set elsewhere in the app):
 import os
 import requests
 import streamlit as st
-from dotenv import load_dotenv
-
-# Load environment variables for the API URL.
-# This enables flexible configuration across local/dev/prod environments without hardcoding.
-load_dotenv()
 
 # Base URL for the FastAPI backend.
 # NOTE: The default value below appears to be formatted like a Markdown link; we preserve it
 # exactly as-is to avoid changing behavior. The rest of the app will use it as provided.
 API_BASE = st.secrets["API_BASE"].rstrip("/")
+API_PREFIX = ""
 
+def api_url(path: str) -> str:
+    return f"{API_BASE}{API_PREFIX}{path}"
 
 def render_chat_panel():
     """
@@ -104,7 +102,7 @@ def render_chat_panel():
             # Call the backend Q&A endpoint.
             # Endpoint format: POST {API_BASE}/qa/{doc_id} with JSON {"question": "..."}
             qa_r = requests.post(
-                f"{API_BASE}/qa/{st.session_state['doc_id']}",
+                api_url(f"/qa/{st.session_state['doc_id']}"),
                 json={"question": q},
                 timeout=120  # generous timeout to allow retrieval + LLM response time
             )
@@ -155,6 +153,7 @@ def render_chat_panel():
 
         # --- Error Handling ---
         # These cases provide user-friendly messages while preserving app stability.
+        except requests.exceptions.ConnectionError:
         except requests.exceptions.ConnectionError:
             st.session_state.chat_history.append({
                 "role": "assistant",
