@@ -1,38 +1,119 @@
 # PolicyExplainer
 
-PolicyExplainer is a modular Retrieval-Augmented Generation (RAG) system that transforms complex health insurance policy PDFs into structured, grounded, and evaluable outputs.
+PolicyExplainer is a full-stack Retrieval-Augmented Generation (RAG) system that transforms complex health insurance policy PDFs into structured, grounded, and evaluable outputs.
 
-The system is engineered for:
+It is designed as a controlled document intelligence pipeline, not a generic chatbot, with strong emphasis on:
 
-- Deterministic preprocessing
+- Grounded generation (no external knowledge)
 - Strict citation enforcement
-- Retrieval precision
+- Deterministic preprocessing
 - Multi-metric evaluation
 - Reproducibility and traceability
-
-PolicyExplainer is not a general chatbot. It is a controlled document intelligence pipeline built to reduce hallucination risk and improve interpretability in applied LLM systems.
 
 ---
 
 # Problem Statement
 
-Insurance policies are legally dense and difficult for consumers to interpret. Traditional LLM-based systems often:
+Health insurance policies are long, technical, and difficult for users to interpret.
 
-- Hallucinate unsupported details
-- Provide incomplete summaries
-- Overuse jargon
-- Fail to quantify output reliability
+Traditional LLM-based solutions often:
+- Hallucinate unsupported information  
+- Miss critical coverage details  
+- Use complex terminology  
+- Provide no measure of answer reliability  
 
-PolicyExplainer addresses these issues by:
+PolicyExplainer addresses this by:
 
-- Restricting answers strictly to document content
-- Enforcing citation validation
-- Dropping unsupported claims
-- Separating deterministic processing from probabilistic generation
-- Measuring output quality across three evaluation dimensions:
-  - Faithfulness
-  - Completeness
-  - Simplicity
+- Restricting outputs strictly to document content  
+- Enforcing citation-backed answers  
+- Removing unsupported claims  
+- Separating deterministic and probabilistic layers  
+- Quantifying output quality using:
+  - Faithfulness  
+  - Completeness  
+  - Simplicity  
+
+---
+
+# Key Features
+
+## 1. End-to-End Document Intelligence Pipeline
+
+Upload → Process → Summarize → Evaluate → Ask Questions
+
+- Upload policy PDF (Streamlit UI)
+- Backend ingestion and validation
+- Structured summary generation
+- Evaluation scoring
+- Interactive grounded Q&A
+
+---
+
+## 2. Deterministic PDF Ingestion
+
+- Page-level extraction using PyMuPDF
+- Header and footer cleaning
+- Policy validation using keyword heuristics
+- Token-based chunking with overlap
+- Page-aware chunking for accurate citations
+
+Artifacts stored per document:
+
+```
+data/documents/{doc_id}/
+├─ raw.pdf
+├─ pages.json
+├─ chunks.jsonl
+```
+
+---
+
+## 3. Retrieval-Augmented Generation (RAG)
+
+- Vector embeddings using OpenAI
+- Stored in ChromaDB
+- Section-aware multi-query retrieval
+- Deduplication by chunk_id
+- Context ordering by document structure
+
+Improves:
+- Recall
+- Relevance
+- Citation grounding
+
+---
+
+## 4. Structured Summarization
+
+Summaries follow a strict schema:
+
+```json
+{
+  "section_name": "...",
+  "present": true,
+  "bullets": [
+    {
+      "text": "...",
+      "citations": [{ "page": 1, "chunk_id": "c_1_0" }]
+    }
+  ]
+}
+```
+
+---
+
+## 5. Grounded Question Answering
+
+* Retrieval of top-k relevant chunks
+* Context sorted in document order
+* Strict JSON response enforcement
+* Citation validation and filtering
+* Removal of unsupported claims
+* Deterministic fallback:
+
+```
+Not found in this document.
+```
 
 ---
 
@@ -40,14 +121,14 @@ PolicyExplainer addresses these issues by:
 
 ## 1. Deterministic PDF Ingestion
 
-- Page-level text extraction (PyMuPDF)
-- Header/footer cleaning
-- Heuristic validation of likely policy structure
-- Token-based chunking (500–800 tokens)
-- Sliding overlap (~80 tokens)
-- Deterministic chunk IDs:
+* Page-level text extraction using PyMuPDF
+* Header and footer cleaning
+* Heuristic validation of policy structure
+* Token-based chunking (500 to 800 tokens)
+* Sliding overlap (~80 tokens)
+* Deterministic chunk IDs:
 
-```text
+```
 c_{page_number}_{chunk_index}
 ```
 
@@ -57,15 +138,15 @@ All artifacts are persisted for reproducibility.
 
 ## 2. Section-Aware Retrieval
 
-Rather than a single embedding query, each canonical policy section triggers multiple semantic sub-queries.
+Instead of a single embedding query, each canonical policy section triggers multiple semantic sub-queries.
 
 Example (Cost Summary):
 
-- deductible
-- copay
-- coinsurance
-- out-of-pocket maximum
-- premium
+* deductible
+* copay
+* coinsurance
+* out-of-pocket maximum
+* premium
 
 Retrieval pipeline:
 
@@ -73,9 +154,9 @@ Retrieval pipeline:
 2. Deduplicate by chunk_id
 3. Retain lowest-distance match
 4. Sort by (page_number, chunk_id)
-5. Cap context window to avoid overload
+5. Cap context window
 
-This improves recall and mitigates the "Lost-in-the-Middle" problem.
+This improves recall and mitigates the "lost in the middle" problem.
 
 ---
 
@@ -83,17 +164,18 @@ This improves recall and mitigates the "Lost-in-the-Middle" problem.
 
 Each section summary enforces a strict JSON contract:
 
-- present (boolean)
-- bullets[]
-  - text
-  - citations[] (chunk_id + page)
+* present (boolean)
+* bullets[]
+
+  * text
+  * citations[] (chunk_id and page)
 
 Post-generation enforcement:
 
-- Filter citations to allowed chunk_ids
-- Drop bullets without valid citations
-- Record validation issues
-- Compute confidence score
+* Filter citations to allowed chunk_ids
+* Drop bullets without valid citations
+* Record validation issues
+* Compute confidence score
 
 Unsupported statements never appear in final output.
 
@@ -101,117 +183,91 @@ Unsupported statements never appear in final output.
 
 ## 4. Grounded Q&A
 
-Users can ask natural language questions about the uploaded policy.
-
 Q&A pipeline:
 
 1. Retrieve top-k relevant chunks
 2. Sort in document order
-3. Force structured JSON response
-4. Filter invalid citations
+3. Generate structured response
+4. Validate citations
 5. Remove unsupported claims
 6. Compute confidence score
 
-If no supporting chunks exist, the system returns exactly:
+If no supporting chunks exist:
 
-```text
+```
 Not found in this document.
 ```
-
-No external knowledge is used.
 
 ---
 
 # Evaluation Framework
 
-PolicyExplainer includes deterministic post-generation evaluation via:
+PolicyExplainer includes deterministic post-generation evaluation:
 
-```text
+```
 POST /evaluate/{doc_id}
 ```
 
-The system measures output quality across three independent axes.
-
 ---
 
-## 1. Faithfulness (0.0 – 1.0)
+## 1. Faithfulness (0.0 to 1.0)
 
 Measures whether each summary bullet is supported by its cited chunk.
 
 Support logic:
 
-- Token overlap threshold
-- Numeric consistency checks
-- Citation validation against retrieved chunk_ids
-
-High faithfulness means claims are grounded in the document.
+* Token overlap threshold
+* Numeric consistency checks
+* Citation validation
 
 ---
 
-## 2. Completeness (0.0 – 1.0)
+## 2. Completeness (0.0 to 1.0)
 
 Measures coverage across canonical policy sections.
 
 Weighted scoring:
 
-- Cost Summary (35%)
-- Covered Services (30%)
-- Administrative Conditions (15%)
-- Exclusions & Limitations (10%)
-- Plan Snapshot (5%)
-- Claims & Appeals (5%)
-
-Encourages balanced and comprehensive summaries.
+* Cost Summary (35 percent)
+* Covered Services (30 percent)
+* Administrative Conditions (15 percent)
+* Exclusions and Limitations (10 percent)
+* Plan Snapshot (5 percent)
+* Claims and Appeals (5 percent)
 
 ---
 
-## 3. Simplicity (0.0 – 1.0)
+## 3. Simplicity (0.0 to 1.0)
 
-Measures how much more understandable the generated summary is compared to the original policy text.
+Measures how much more understandable the generated summary is compared to the original policy.
 
-The Simplicity Score evaluates:
+Evaluates:
 
-1. Readability Improvement
-   - Reduction in average sentence length
-   - Flesch Reading Ease delta between source and summary
+* Readability improvement (sentence length, Flesch score)
+* Jargon reduction using predefined dictionary
+* Structural clarity (bullet formatting, reduced complexity)
 
-2. Jargon Reduction
-   - Decrease in domain-specific terms using a predefined jargon dictionary
-   - Percentage of simplified terminology substitutions
+Example:
 
-3. Structural Clarity
-   - Bullet formatting vs dense paragraph text
-   - Reduced clause complexity
-
-Example logic:
-
-```text
+```
 Simplicity Score =
 0.4 * readability_improvement
 + 0.4 * jargon_reduction
 + 0.2 * structural_simplification
 ```
 
-Interpretation:
-
-- ≥ 0.75 → Strong simplification
-- 0.50–0.75 → Moderate simplification
-- < 0.50 → Limited simplification
-
-This metric ensures summaries are not only grounded and complete, but genuinely easier to understand.
-
 ---
 
 # Architecture Overview
 
-The system is divided into:
+The system consists of:
 
-- Frontend (Streamlit) — UI layer
-- Backend (FastAPI) — document processing & LLM orchestration
+* Frontend: Streamlit
+* Backend: FastAPI
 
 Core backend modules:
 
-```text
+```
 backend/
 ├─ api.py
 ├─ ingestion.py
@@ -224,9 +280,9 @@ backend/
 └─ utils.py
 ```
 
-Artifacts are stored per document:
+Artifacts:
 
-```text
+```
 data/documents/{doc_id}/
 ├─ raw.pdf
 ├─ pages.json
@@ -234,9 +290,9 @@ data/documents/{doc_id}/
 └─ policy_summary.json
 ```
 
-Vector embeddings are stored in:
+Vector storage:
 
-```text
+```
 ./chroma_data
 ```
 
@@ -246,34 +302,32 @@ Vector embeddings are stored in:
 
 Deterministic:
 
-- Chunking
-- Retrieval ordering
-- Deduplication
-- Citation filtering
-- Faithfulness scoring
-- Completeness scoring
-- Simplicity scoring
-- Confidence scoring
+* Chunking
+* Retrieval ordering
+* Deduplication
+* Citation filtering
+* Faithfulness scoring
+* Completeness scoring
+* Simplicity scoring
+* Confidence scoring
 
 Probabilistic:
 
-- LLM generation
+* LLM generation
 
-By isolating deterministic validation layers, the system reduces hallucination exposure and increases auditability.
+This separation improves auditability and reduces hallucination risk.
 
 ---
 
 # Hallucination Mitigation Strategy
 
-PolicyExplainer reduces hallucination risk through:
-
-- Context-limited retrieval
-- Multi-query recall
-- Strict JSON contract enforcement
-- Citation filtering
-- Automatic removal of unsupported bullets
-- Explicit "Not found" requirement
-- Deterministic faithfulness scoring
+* Context-limited retrieval
+* Multi-query recall
+* Strict JSON contract enforcement
+* Citation filtering
+* Removal of unsupported bullets
+* Explicit fallback response
+* Deterministic evaluation
 
 Reliability is prioritized over verbosity.
 
@@ -282,48 +336,49 @@ Reliability is prioritized over verbosity.
 # Technology Stack
 
 Backend:
-- Python
-- FastAPI
-- Pydantic
-- PyMuPDF
-- Chroma Vector Database
-- OpenAI API
+
+* Python
+* FastAPI
+* Pydantic
+* PyMuPDF
+* ChromaDB
+* OpenAI API
 
 Frontend:
-- Streamlit
 
-Persistence:
-- Local JSON artifact storage
-- Persistent vector index
+* Streamlit
+
+Storage:
+
+* Local JSON artifacts
+* Persistent vector index
 
 ---
 
 # Key Engineering Decisions
 
-- Section-aware multi-query retrieval
-- Deterministic chunking for reproducibility
-- Post-generation citation validation
-- Automatic removal of unsupported claims
-- Weighted completeness scoring
-- Readability-based simplicity scoring
-- Separation of evaluation from generation
-
-These decisions prioritize interpretability, reliability, and measurable output quality.
+* Section-aware multi-query retrieval
+* Deterministic chunking
+* Post-generation citation validation
+* Removal of unsupported claims
+* Weighted completeness scoring
+* Readability-based simplicity scoring
+* Separation of evaluation from generation
 
 ---
 
 # Why This Project Matters
 
-PolicyExplainer demonstrates applied RAG system design with:
+PolicyExplainer demonstrates real-world RAG system design with:
 
-- Retrieval optimization
-- Guardrail engineering
-- Structured output enforcement
-- Multi-axis evaluation metrics
-- Reproducibility and traceability
+* Retrieval optimization
+* Guardrail engineering
+* Structured output enforcement
+* Multi-axis evaluation
+* Reproducibility and traceability
 
-It reflects deliberate engineering around LLM reliability rather than simple API integration.
+It focuses on building reliable, auditable AI systems rather than simple LLM integrations.
 
 ---
 
-End of README.
+*End of README.*
