@@ -28,18 +28,24 @@ Tyler led the system design and implemented the full backend architecture, evalu
 ## Jaya Sruthi Raj Perikala  
 **Frontend Lead and UX Designer**
 
+- Contributed to initial system design and workflow definition
+- Developed the initial application structure and backend–frontend integration approach
 - Designed and implemented the Streamlit user interface  
 - Built dashboard navigation (Summary, FAQs, New Policy, Export)  
 - Implemented Policy Assistant chat interface  
-- Structured summary display and citation rendering  
-- Contributed to user workflow clarity and documentation  
+- Structured summary display and citation rendering
+- Designed and defined the Simplicity evaluation metric
+- Contributed to documentation and overall user workflow clarity
+- Delivered the end-to-end system demo and walkthrough
 
 ---
 
 ## Carson Pimental  
 **Presentation and Communication Lead**
 
-- Structured final system presentation  
+- Contributed to initial system design and workflow definition
+- Developed the initial application structure and backend–frontend integration approach  
+- Structured and developed the final system presentation  
 - Developed architectural explanation materials  
 - Synthesized technical components into stakeholder-ready narrative  
 - Coordinated demo walkthrough and live demonstration  
@@ -49,18 +55,22 @@ Tyler led the system design and implemented the full backend architecture, evalu
 ## Kevin Sohn  
 **Testing and System Validation**
 
+- Contributed to project proposal development
 - Conducted manual testing across ingestion and Q&A workflows  
 - Validated citation formatting and edge cases  
-- Assisted in reviewing summary consistency and evaluation outputs  
+- Assisted in reviewing summary consistency and evaluation outputs
+- Contributed to final presentation preparation
 
 ---
 
 ## Sherry Hsu  
 **Research and Documentation Support**
 
+- Contributed to project proposal development
 - Assisted with policy section taxonomy alignment  
 - Reviewed completeness criteria definitions  
-- Contributed to documentation clarity and FAQ refinement  
+- Contributed to documentation clarity and FAQ refinement
+- Contributed to final presentation preparation 
 
 ---
 
