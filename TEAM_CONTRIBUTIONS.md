@@ -33,7 +33,7 @@ Tyler led the system design and implemented the full backend architecture, evalu
 - Built dashboard navigation (Summary, FAQs, New Policy, Export)  
 - Implemented Policy Assistant chat interface  
 - Structured summary display and citation rendering
-- Designed and defined the Simplicity evaluation metric
+- Designed and implemented the Simplicity evaluation metric
 - Contributed to documentation and overall user workflow clarity
 - Delivered the end-to-end system demo and walkthrough
 
@@ -51,6 +51,7 @@ Tyler led the system design and implemented the full backend architecture, evalu
   - Faithfulness  
   - Completeness
 - Coordinated demo walkthrough and live demonstration
+- Contributed to writing and refining the Pulse article
 ---
 
 ## Kevin Sohn  
@@ -61,6 +62,7 @@ Tyler led the system design and implemented the full backend architecture, evalu
 - Validated citation formatting and edge cases  
 - Assisted in reviewing summary consistency and evaluation outputs
 - Contributed to final presentation preparation
+- Contributed to writing and refining the Pulse article
 
 ---
 
@@ -71,7 +73,8 @@ Tyler led the system design and implemented the full backend architecture, evalu
 - Assisted with policy section taxonomy alignment  
 - Reviewed completeness criteria definitions  
 - Contributed to documentation clarity and FAQ refinement
-- Contributed to final presentation preparation 
+- Contributed to final presentation preparation
+- Contributed to writing and refining the Pulse article
 
 ---
 
