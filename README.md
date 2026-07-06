@@ -10,8 +10,6 @@ It is designed as a controlled document intelligence pipeline, not a generic cha
 - Multi-metric evaluation
 - Reproducibility and traceability
 
----
-
 # Problem Statement
 
 Health insurance policies are long, technical, and difficult for users to interpret.
@@ -33,8 +31,6 @@ PolicyExplainer addresses this by:
   - Completeness  
   - Simplicity  
 
----
-
 # Key Features
 
 ## 1. End-to-End Document Intelligence Pipeline
@@ -46,8 +42,6 @@ Upload → Process → Summarize → Evaluate → Ask Questions
 - Structured summary generation
 - Evaluation scoring
 - Interactive grounded Q&A
-
----
 
 ## 2. Deterministic PDF Ingestion
 
@@ -66,8 +60,6 @@ data/documents/{doc_id}/
 ├─ chunks.jsonl
 ```
 
----
-
 ## 3. Retrieval-Augmented Generation (RAG)
 
 - Vector embeddings using OpenAI
@@ -80,8 +72,6 @@ Improves:
 - Recall
 - Relevance
 - Citation grounding
-
----
 
 ## 4. Structured Summarization
 
@@ -100,8 +90,6 @@ Summaries follow a strict schema:
 }
 ```
 
----
-
 ## 5. Grounded Question Answering
 
 * Retrieval of top-k relevant chunks
@@ -114,8 +102,6 @@ Summaries follow a strict schema:
 ```
 Not found in this document.
 ```
-
----
 
 # System Capabilities
 
@@ -133,8 +119,6 @@ c_{page_number}_{chunk_index}
 ```
 
 All artifacts are persisted for reproducibility.
-
----
 
 ## 2. Section-Aware Retrieval
 
@@ -158,8 +142,6 @@ Retrieval pipeline:
 
 This improves recall and mitigates the "lost in the middle" problem.
 
----
-
 ## 3. Structured Summarization
 
 Each section summary enforces a strict JSON contract:
@@ -179,8 +161,6 @@ Post-generation enforcement:
 
 Unsupported statements never appear in final output.
 
----
-
 ## 4. Grounded Q&A
 
 Q&A pipeline:
@@ -198,8 +178,6 @@ If no supporting chunks exist:
 Not found in this document.
 ```
 
----
-
 # Evaluation Framework
 
 PolicyExplainer includes deterministic post-generation evaluation:
@@ -207,8 +185,6 @@ PolicyExplainer includes deterministic post-generation evaluation:
 ```
 POST /evaluate/{doc_id}
 ```
-
----
 
 ## 1. Faithfulness (0.0 to 1.0)
 
@@ -219,8 +195,6 @@ Support logic:
 * Token overlap threshold
 * Numeric consistency checks
 * Citation validation
-
----
 
 ## 2. Completeness (0.0 to 1.0)
 
@@ -235,7 +209,7 @@ Weighted scoring:
 * Plan Snapshot (5 percent)
 * Claims and Appeals (5 percent)
 
----
+ 
 
 ## 3. Simplicity (0.0 to 1.0)
 
@@ -256,7 +230,7 @@ Simplicity Score =
 + 0.2 * structural_simplification
 ```
 
----
+ 
 
 # Architecture Overview
 
@@ -296,7 +270,7 @@ Vector storage:
 ./chroma_data
 ```
 
----
+ 
 
 # Deterministic vs Probabilistic Layers
 
@@ -317,7 +291,7 @@ Probabilistic:
 
 This separation improves auditability and reduces hallucination risk.
 
----
+ 
 
 # Hallucination Mitigation Strategy
 
@@ -331,7 +305,7 @@ This separation improves auditability and reduces hallucination risk.
 
 Reliability is prioritized over verbosity.
 
----
+ 
 
 # Technology Stack
 
@@ -353,7 +327,7 @@ Storage:
 * Local JSON artifacts
 * Persistent vector index
 
----
+ 
 
 # Key Engineering Decisions
 
@@ -365,7 +339,7 @@ Storage:
 * Readability-based simplicity scoring
 * Separation of evaluation from generation
 
----
+ 
 
 # Why This Project Matters
 
@@ -379,6 +353,6 @@ PolicyExplainer demonstrates real-world RAG system design with:
 
 It focuses on building reliable, auditable AI systems rather than simple LLM integrations.
 
----
+ 
 
 *End of README.*
